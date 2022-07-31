@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.li.teaching_assistants.dao.DataDao">
+    <resultMap id="DataResultMap" type="com.li.teaching_assistants.pojo.University">
+        <id column="university_name" property="universityName" jdbcType="VARCHAR" />
+    </resultMap>
+    <insert id="insertUniversity" parameterType="String">
+        insert into teaching_assistants.university (university_name) values (#{university});
+    </insert>
+
+</mapper>

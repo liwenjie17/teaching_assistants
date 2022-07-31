@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.li.teaching_assistants.dao.RankDao">
+    <resultMap id="AllRankResultMap" type="com.li.teaching_assistants.pojo.All_Rank" >
+        <result property="email" column="email" />
+        <result property="rank" column="rank"  />
+        <result property="userName" column="userName" />
+        <result property="score" column="socre" />
+        <result property="icon" column="icon" />
+        <result property="rankImage" column="rankImage" />
+        <result property="completeNumber" column="completeNumber" />
+        <result property="ptaNumber" column="ptaNumber" />
+        <result property="nowcoderNumber" column="nowcoderNumber" />
+        <result property="ptaScore" column="ptaScore" />
+        <result property="nowcoderScore" column="nowcoderScore" />
+    </resultMap>
+    <select id="getAllRank" resultMap="AllRankResultMap" parameterType="String">
+        select * from (select user.user_email email, user.user_status user_status, user.user_name userName, count(completed_topic.ques_title) ptaNumber
+        from user left join completed_topic
+        on user.user_pta_id = completed_topic.user_id
+        group by user.user_email) as a, (select user.user_email email, CAST( IFNULL (sum(performance.score) ,0)*0.115 AS decimal) ptaScore from user left join performance
+        on  user.user_pta_id = performance.user_pta_id
+        group by user.user_email) as b, (select user.user_email email, count(nowcoder_ques_id) nowcoderNumber,
+        CAST(IFNULL (sum(nowcoder_ques_score),0) AS decimal) nowcoderScore
+        from user left join (select nowcoder_completed_submit.user_nowcoder_id user_nowcoder_id, nowcoder_completed_submit.nowcoder_ques_uuid nowcoder_ques_id,
+        nowcoder_completed_submit.nowcoder_ques_score nowcoder_ques_score
+        from nowcoder_completed_submit) as d
+        on user.user_nowcoder_id = d.user_nowcoder_id
+        group by user.user_email) as c where a.email = b.email and a.email = c.email and b.email = c.email and a.user_status = 0
+        <if test="email != null">
+            and c.email = #{email}
+        </if>
+        order by (b.ptaScore + c.nowcoderScore) desc ;
+    </select>
+
+</mapper>

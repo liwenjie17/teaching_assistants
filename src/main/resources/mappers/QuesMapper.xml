@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.li.teaching_assistants.dao.QuesDao">
+    <resultMap id="NowCoderResultMap" type="com.li.teaching_assistants.pojo.NowCoder_Ques" >
+        <result property="submitId" column="submitId" />
+        <result property="quesId" column="quesId" />
+        <result property="quesNo" column="quesNo" />
+        <result property="quesTitle" column="quesTitle" />
+        <result property="quesLabel" column="quesLabel" />
+        <result property="quesSubTime" column="quesSubTime" />
+        <result property="isCollected" column="isCollected" />
+    </resultMap>
+    <select id="getNowCoderQuesByEmailAndLabel" resultMap="NowCoderResultMap" parameterType="String">
+        select a.*,if(IFNULL(b.ques_id,0) = 0,0,1) isCollected from
+        (select nowcoder_completed_submit.nowcoder_submit_id submitId, nowcoder_completed_submit.user_nowcoder_id userId, nowcoder_completed_submit.nowcoder_ques_uuid quesId,
+        nowcoder_completed_submit.nowcoder_ques_datetime quesSubTime, nowcoder_completed_submit.nowcoder_ques_no quesNo,
+        nowcoder_completed_submit.nowcoder_ques_title quesTitle, nowcoder_completed_submit.nowcoder_ques_label quesLabel
+        from user,nowcoder_completed_submit where user.user_nowcoder_id = nowcoder_completed_submit.user_nowcoder_id
+        and user.user_email = #{email}
+        <if test="label != null">
+            and nowcoder_completed_submit.nowcoder_ques_label like concat('%',#{label},'%')
+        </if>
+        ) as a
+        left join
+        (select bookmarked_submission_records.user_id user_id, bookmarked_submission_records.ques_id ques_id
+        from bookmarked_submission_records) as b on a.quesId = b.ques_id
+        and a.userId = b.user_id;
+    </select>
+
+
+    <select id="getNowCoderQuesByEmailAndType" resultMap="NowCoderResultMap">
+        select a.*,if(IFNULL(b.ques_id,0) = 0,0,1) isCollected from
+        (select nowcoder_completed_submit.nowcoder_submit_id submitId, nowcoder_completed_submit.user_nowcoder_id userId, nowcoder_completed_submit.nowcoder_ques_uuid quesId,
+        nowcoder_completed_submit.nowcoder_ques_datetime quesSubTime, nowcoder_completed_submit.nowcoder_ques_no quesNo,
+        nowcoder_completed_submit.nowcoder_ques_title quesTitle, nowcoder_completed_submit.nowcoder_ques_label quesLabel
+        from user,nowcoder_completed_submit where user.user_nowcoder_id = nowcoder_completed_submit.user_nowcoder_id
+        and user.user_email = #{email}
+        <if test="type != null">
+            and nowcoder_completed_submit.nowcoder_ques_label REGEXP  ( select GROUP_CONCAT(nowcoder_label.ques_label separator '|')
+            from nowcoder_label where nowcoder_label.ques_type = #{type})
+        </if>
+        ) as a
+        left join
+        (select bookmarked_submission_records.user_id user_id, bookmarked_submission_records.ques_id ques_id
+        from bookmarked_submission_records) as b on a.quesId = b.ques_id
+        and a.userId = b.user_id;
+    </select>
+
+    <resultMap id="PTAResultMap" type="com.li.teaching_assistants.pojo.PTA_Ques">
+        <result property="ques_id" column="ques_id" />
+        <result property="title" column="title" />
+        <result property="setId" column="setId" />
+        <result property="setName" column="setName" />
+        <result property="isCollected" column="isCollected" />
+    </resultMap>
+
+    <select id="getPTAQuesByEmailAndQuesId" resultMap="PTAResultMap" parameterType="String" >
+        select a.*,if(IFNULL(b.ques_id,0) = 0,0,1) isCollected from
+        (select completed_topic.user_id userId, completed_topic.ques_id ques_id, completed_topic.ques_title title ,
+        questions_set.set_id setId, questions_set.set_title setName
+        from user,completed_topic,questions_set where user.user_pta_id = completed_topic.user_id
+        and completed_topic.set_id = questions_set.set_id and user.user_email = #{email}
+        and completed_topic.ques_id = #{ques_id}
+        ) as a
+        left join
+        (select bookmarked_submission_records.user_id user_id, bookmarked_submission_records.ques_id ques_id
+        from bookmarked_submission_records) as b on a.ques_id = b.ques_id
+        and a.userId = b.user_id;
+    </select>
+
+
+    <select id="getPTAQuesByEmailAndLabel" resultMap="PTAResultMap" parameterType="String" >
+        select a.*,if(IFNULL(b.ques_id,0) = 0,0,1) isCollected from
+        (select completed_topic.user_id userId, completed_topic.ques_id ques_id, completed_topic.ques_title title ,
+         questions_set.set_id setId, questions_set.set_title setName
+        from user,completed_topic,questions_set where user.user_pta_id = completed_topic.user_id
+        and completed_topic.set_id = questions_set.set_id and user.user_email = #{email}
+        <if test="label != null">
+            and questions_set.set_label like concat('%',#{label},'%')
+        </if>
+        ) as a
+        left join
+        (select bookmarked_submission_records.user_id user_id, bookmarked_submission_records.ques_id ques_id
+        from bookmarked_submission_records) as b on a.ques_id = b.ques_id
+        and a.userId = b.user_id;
+    </select>
+
+    <select id="getPTAQuesByEmailAndSetId" resultMap="PTAResultMap" parameterType="String" >
+        select a.*,if(IFNULL(b.ques_id,0) = 0,0,1) isCollected from
+        (select completed_topic.user_id userId, completed_topic.ques_id ques_id, completed_topic.ques_title title ,
+        questions_set.set_id setId, questions_set.set_title setName
+        from user,completed_topic,questions_set where user.user_pta_id = completed_topic.user_id
+        and completed_topic.set_id = questions_set.set_id and user.user_email = #{email}
+        <if test="set_id != null">
+            and questions_set.set_id = #{set_id}
+        </if>
+        ) as a
+        left join
+        (select bookmarked_submission_records.user_id user_id, bookmarked_submission_records.ques_id ques_id
+        from bookmarked_submission_records) as b on a.ques_id = b.ques_id
+        and a.userId = b.user_id;
+    </select>
+
+    <resultMap id="SetResultMap" type="com.li.teaching_assistants.pojo.Question_Set">
+        <result property="setId" column="setId" />
+        <result property="setTitle" column="setTitle" />
+    </resultMap>
+
+    <select id="getSetByEmail" resultMap="SetResultMap" parameterType="String" >
+        select distinct questions_set.set_id setId, questions_set.set_title setTitle
+        from user,performance,questions_set
+        where user.user_pta_id = performance.user_pta_id
+        and questions_set.set_id = performance.set_id
+        and user.user_email = #{email};
+    </select>
+
+    <resultMap id="LabelResultMap" type="com.li.teaching_assistants.pojo.Question_Set">
+        <result property="setId" column="setId" />
+        <result property="setLabel" column="setLabel" />
+    </resultMap>
+
+    <select id="getLabel" resultMap="LabelResultMap" parameterType="String" >
+        select distinct questions_set.set_label setLabel
+        from user,performance,questions_set
+        where user.user_pta_id = performance.user_pta_id
+        and questions_set.set_id = performance.set_id
+        and user.user_email = #{email}
+        and questions_set.set_label is not null;
+    </select>
+
+    <resultMap id="SubmissionRecordsResultMap" type="com.li.teaching_assistants.pojo.Submission_Records" >
+        <result property="quesId" column="quesId" />
+        <result property="userId" column="userId" />
+        <result property="quesTitle" column="quesTitle" />
+        <result property="userEmail" column="userEmail" />
+        <result property="quesContent" column="quesContent" />
+        <result property="quesCode" column="quesCode" />
+        <result property="userNotes" column="userNotes" />
+    </resultMap>
+
+    <select id="getCollectTopicByEmail" resultMap="SubmissionRecordsResultMap" parameterType="String" >
+        select user.user_email userEmail, bookmarked_submission_records.ques_id quesId ,
+        completed_topic.ques_title quesTitle,
+        bookmarked_submission_records.user_id userId, bookmarked_submission_records.ques_content quesContent,
+        bookmarked_submission_records.ques_code quesCode, bookmarked_submission_records.user_notes userNotes
+        from user,bookmarked_submission_records,completed_topic where user.user_pta_id = bookmarked_submission_records.user_id
+        and completed_topic.ques_id = bookmarked_submission_records.ques_id
+        and completed_topic.user_id = bookmarked_submission_records.user_id
+        and user.user_email = #{email};
+    </select>
+
+    <select id="getCollectTopicByEmailAndQuesId" resultMap="SubmissionRecordsResultMap" parameterType="String" >
+        select user.user_email userEmail, bookmarked_submission_records.ques_id quesId ,
+        completed_topic.ques_title quesTitle,
+        bookmarked_submission_records.user_id userId, bookmarked_submission_records.ques_content quesContent,
+        bookmarked_submission_records.ques_code quesCode, bookmarked_submission_records.user_notes userNotes
+        from user,bookmarked_submission_records,completed_topic where user.user_pta_id = bookmarked_submission_records.user_id
+        and completed_topic.ques_id = bookmarked_submission_records.ques_id
+        and completed_topic.user_id = bookmarked_submission_records.user_id
+        and user.user_email = #{email} and bookmarked_submission_records.ques_id = #{ques_id};
+    </select>
+
+    <update id="updateCollectTopic" parameterType="String" >
+        update bookmarked_submission_records
+         set bookmarked_submission_records.user_notes = #{notes}
+         where bookmarked_submission_records.user_id = #{userId}
+         and bookmarked_submission_records.ques_id = #{quesId} ;
+    </update>
+
+    <insert id="insertCollectTopicWithEmailAndQuesId" parameterType="com.li.teaching_assistants.pojo.Submission_Records" >
+        insert into bookmarked_submission_records (ques_id, ques_content, ques_code, user_notes, user_id)
+         VALUES (#{quesId},#{quesContent},#{quesCode},#{userNotes},#{userId});
+    </insert>
+
+    <delete id="deleteCollectTopicByEmailAndQuesId" parameterType="String" >
+        delete from bookmarked_submission_records
+        where user_id = #{user_id} and ques_id = #{ques_id};
+    </delete>
+
+</mapper>

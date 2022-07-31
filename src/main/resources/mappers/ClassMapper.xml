@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.li.teaching_assistants.dao.ClassDao">
+    <resultMap id="ClaaesResultMap" type="com.li.teaching_assistants.pojo.Classes">
+        <id column="class_id" property="classId" jdbcType="INTEGER" />
+        <id column="class_name" property="className" jdbcType="VARCHAR" />
+        <id column="class_owner" property="classOwner" jdbcType="VARCHAR" />
+        <id column="groups_id" property="groupsId" jdbcType="VARCHAR" />
+    </resultMap> 
+    
+<!--    <select id="getClassesByEmail" resultType="com.li.teaching_assistants.pojo.Classes" parameterType="String">-->
+<!--        select * from classes where class_id in-->
+<!--            (select class_id from user_classes where user_email = #{email});-->
+<!--    </select>-->
+
+
+
+    <resultMap id="UserInClass" type="com.li.teaching_assistants.pojo.Classes">
+        <result property="classId" column="classId" />
+        <result property="className" column="classname" />
+        <result property="classOwner" column="classowner" />
+        <result property="groupsId" column="groupid" />
+        <collection property="users" ofType="com.li.teaching_assistants.pojo.User">
+            <result property="userEmail" column="useremail" />
+            <result property="userPassword" column="userpassword" />
+            <result property="userName" column="username" />
+            <result property="userStatus" column="status" />
+            <result property="userImage" column="image" />
+            <result property="userPtaId" column="ptaId" />
+            <result property="userPtaAccount" column="ptaAcc" />
+            <result property="userPtaPassword" column="ptaPass" />
+            <result property="userNowcoderId" column="nowcoederId" />
+            <result property="userNowcoderAccount" column="nowcoderAcc" />
+            <result property="userNowcoderPassword" column="nowcoderPass" />
+            <result property="userChaoxingAccount" column="chaoxingAcc" />
+            <result property="userChaoxingPassword" column="chaoxingPass" />
+            <result property="userUnit" column="unit" />
+            <result property="userTrueName" column="trueName" />
+            <result property="userStudentId" column="studentId" />
+            <result property="userInviteCode" column="inviteCode" />
+            <result property="userGender" column="gender" />
+            <result property="userBirthday" column="birthday" />
+            <result property="userScore" column="userScore" />
+            <result property="userPtaNumber" column="userPtaNumber" />
+            <result property="userNowcoderNumber" column="userNowcoderNumber" />
+            <result property="userPtaChange" column="userPtaChange" />
+            <result property="userNowcoderChange" column="userNowcoderChange" />
+        </collection>
+    </resultMap>
+
+    <select id="getClassesByEmail" resultMap="UserInClass" parameterType="String">
+        select classes.class_id classId, classes.class_name classname, classes.class_owner classowner, classes.groups_id groupid,
+            user.user_email useremail, user.user_password userpassword, user.user_name username,
+            user.user_gender gender, user.user_birthday birthday, user.user_status status,
+            user.user_image image, user.user_pta_id ptaId, user.user_pta_account ptaAcc,
+            user.user_pta_password ptaPass, user.user_nowcoder_id nowcoederId, user.user_nowcoder_account nowcoderAcc,
+            user.user_nowcoder_password nowcoderPass, user.user_chaoxing_account chaoxingAcc,
+            user.user_chaoxing_password chaoxingPass, user.user_unit unit, user.user_true_name trueName,
+            user.user_student_id studentId, user.user_invite_code inviteCode, user.user_score userScore,
+            user.user_pta_number userPtaNumber, user.user_nowcoder_number userNowcoderNumber,
+            user.user_pta_change userPtaChange, user.user_nowcoder_change userNowcoderChan
+         from classes, user, user_classes where user_classes.class_id = classes.class_id
+         and user_classes.user_email = user.user_email
+         and classes.class_id in (select class_id from user_classes where user_email = #{email});
+    </select>
+
+    <select id="getSetByClassId" parameterType="int" resultType="com.li.teaching_assistants.pojo.Question_Set">
+        select questions_set.set_id, questions_set.set_title, questions_set.set_total_score,
+            questions_set.set_start_time, questions_set.set_deadline, questions_set.set_creator,
+            questions_set.set_label, questions_set.set_pass_rate_max, questions_set.set_pass_rate_min,
+            questions_set.set_ques_number
+        from questions_set,class_set,classes where questions_set.set_id = class_set.set_id and
+        class_set.groups_id = classes.groups_id and classes.class_id = #{class_id};
+    </select>
+
+
+    <resultMap id="PerformancesResultMap" type="com.li.teaching_assistants.pojo.Performance" >
+        <result property="setId" column="setId" />
+        <result property="userId" column="userId" />
+        <result property="user_true_name" column="trueName" />
+        <result property="score" column="score" />
+        <result property="completedNumber" column="completedNumber" />
+        <result property="percentageComplete" column="percentageComplete" />
+    </resultMap>
+
+    <select id="getPerformancesBySet" resultMap="PerformancesResultMap" parameterType="String">
+        select user.user_pta_id userId, questions_set.set_id setId, user.user_true_name trueName, performance.score score, performance.completed_number completedNumber,
+            round(performance.score/questions_set.set_total_score,4) as percentageComplete
+        from questions_set, performance, user
+        where performance.set_id = questions_set.set_id and user.user_pta_id = performance.user_pta_id
+        and questions_set.set_id = #{set_id} order by percentageComplete desc ;
+    </select>
+
+    <resultMap id="SubmitRecordResultMap" type="com.li.teaching_assistants.pojo.Submit_Record" >
+        <result property="recordId" column="recordId" />
+        <result property="userPtaId" column="userPtaId" />
+        <result property="quesId" column="quesId" />
+        <result property="setId" column="setId" />
+        <result property="submitTime" column="submitTime"/>
+        <result property="submitState" column="submitState" />
+    </resultMap>
+
+    <select id="getSubmitRecordsByUserPtaIdAndSetId" resultMap="SubmitRecordResultMap" parameterType="String">
+        select submit_record.record_id recordId, submit_record.user_pta_id userPtaId,
+            submit_record.ques_id quesId, submit_record.set_id setId, submit_record.submit_time submitTime,
+            submit_record.submit_state submitState from submit_record
+            where submit_record.user_pta_id = #{user_pta_id} and submit_record.set_id = #{set_id};
+    </select>
+
+
+
+    <select id="getPtaPerformanceByClassId"  resultMap="PerformancesResultMap" parameterType="String" >
+         SELECT user.user_pta_id userId, user.user_true_name trueName, sum(performance.score)*0.115 score, sum(performance.completed_number) completedNumber
+            from user,performance where user.user_pta_id = performance.user_pta_id
+            and user.user_email in (SELECT user_classes.user_email from user_classes where user_classes.class_id = #{class_id})
+            and user.user_status = 0
+             GROUP BY user.user_pta_id order by score desc ;
+    </select>
+    
+
+    <select id="getNowcoderPerformanceByClassId" resultMap="PerformancesResultMap" parameterType="String" >
+        SELECT user.user_nowcoder_id userId, user.user_true_name trueName,  count(*) completedNumber,
+         sum(nowcoder_completed_submit.nowcoder_ques_score) score
+            from user,nowcoder_completed_submit  where user.user_nowcoder_id = nowcoder_completed_submit.user_nowcoder_id
+            and user.user_email in (SELECT user_classes.user_email from user_classes where user_classes.class_id = #{class_id})
+            and user.user_status = 0
+             GROUP BY user.user_nowcoder_id order by score desc ;
+    </select>
+
+    <select id="getAllPerformanceByClassId" resultMap="PerformancesResultMap" parameterType="String" >
+        select a.userId userId, a.trueName trueName, score1*0.115+score2 score, completedNumber1+completedNumber2 completedNumber from
+            (SELECT user.user_email userId, user.user_true_name trueName, IFNULL(sum(performance.score),0) score1, IFNULL(sum(performance.completed_number),0) completedNumber1
+            from user left join performance on user.user_pta_id = performance.user_pta_id
+            where user.user_email in (SELECT user_classes.user_email from user_classes where user_classes.class_id = #{class_id})
+						and user.user_status = 0
+             GROUP BY user.user_email ) as a ,
+			(SELECT user.user_email userId2,  count(*) completedNumber2, IFNULL(sum(nowcoder_completed_submit.nowcoder_ques_score),0) score2
+            from user left join nowcoder_completed_submit  on user.user_nowcoder_id = nowcoder_completed_submit.user_nowcoder_id
+            where user.user_email in (SELECT user_classes.user_email from user_classes where user_classes.class_id = #{class_id})
+						and user.user_status = 0
+            GROUP BY user.user_email )
+        as b where a.userId = b.userId2
+		GROUP BY userId order by score desc;
+    </select>
+
+    <resultMap id="UserGroupResultMap" type="com.li.teaching_assistants.pojo.User_Group" >
+        <result property="userEmail" column="userEmail" />
+        <result property="userPtaId" column="userPtaId" />
+        <result property="groupsId" column="groupsId" />
+        <result property="groupName" column="groupName" />
+    </resultMap>
+
+    <select id="getUserGroupByEmail" resultMap="UserGroupResultMap" parameterType="String" >
+        select user.user_email, teacher_groups.user_pta_id userPtaId, teacher_groups.group_id groupsId,
+        teacher_groups.group_name groupName
+        from teacher_groups,user where user.user_pta_id = teacher_groups.user_pta_id
+        and teacher_groups.group_id not in (select classes.groups_id from classes
+				where classes.class_owner = #{email})
+        and user.user_email  = #{email};
+    </select>
+
+    <insert id="createClass" parameterType="map" >
+        insert into classes (class_name, class_owner, groups_id)
+        values (#{className},#{classOwner},#{groupId});
+
+        insert into user_classes (class_id, user_email)
+        VALUES ((select classes.class_id from classes
+        where classes.class_owner = #{classOwner}
+        and classes.groups_id = #{groupId}),#{classOwner});
+
+
+        <if test="group != null and group.size() != 0">
+            insert into user_classes (class_id, user_email)
+            VALUES
+            <foreach collection="group" item="pta" index="index"  separator="," >
+                <if test="pta.userPtaId != null">
+                    ((select classes.class_id from classes
+                    where classes.class_owner = #{classOwner}
+                    and classes.groups_id = #{pta.groupId}),
+                    (select user.user_email from user
+                    where user.user_pta_id = #{pta.userPtaId} ))
+                </if>
+
+            </foreach>
+        </if>
+
+        ;
+
+    </insert>
+
+
+
+    <resultMap id="PTAGroupResultMap" type="com.li.teaching_assistants.pojo.PTA_Groups" >
+        <result property="groupId" column="groupId" />
+        <result property="userPtaId" column="userPtaId" />
+        <result property="userName" column="userName" />
+    </resultMap>
+
+    <select id="getGroupById"  resultMap="PTAGroupResultMap" parameterType="String" >
+        select pta_groups.group_id groupId, pta_groups.user_pta_id userPtaId,
+        pta_groups.user_name userName
+        from pta_groups
+        where pta_groups.group_id = #{group_id};
+    </select>
+
+    <select id="getBindingGroupById" resultMap="PTAGroupResultMap" parameterType="String" >
+        select pta_groups.group_id groupId, pta_groups.user_pta_id userPtaId,
+        pta_groups.user_name userName
+        from pta_groups inner join user on pta_groups.user_pta_id = user.user_pta_id
+        and pta_groups.group_id = #{group_id} ;
+    </select>
+
+    <select id="getUnBindingGroupById" resultMap="PTAGroupResultMap" parameterType="String" >
+        select * from (select user.user_email email, pta_groups.group_id groupId, pta_groups.user_pta_id userPtaId,
+        pta_groups.user_name userName
+        from pta_groups left join user on pta_groups.user_pta_id = user.user_pta_id ) as gro
+        where gro.email is null
+		and gro.groupId = #{group_id} ;
+    </select>
+
+</mapper>
